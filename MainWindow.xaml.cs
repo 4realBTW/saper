@@ -9,6 +9,7 @@ namespace Minesweeper
     {
         const int Rows = 10;
         const int Cols = 10;
+        const int MinesCount = 15;
         Cell[,] cells;
 
         public MainWindow()
@@ -25,6 +26,8 @@ namespace Minesweeper
             StatusText.Foreground = new SolidColorBrush(Color.FromRgb(206, 145, 120));
 
             CreateCells();
+            PlaceMines();
+            CalculateNumbers();
         }
 
         void CreateCells()
@@ -50,6 +53,55 @@ namespace Minesweeper
 
                     cells[row, col] = cell;
                     BoardGrid.Children.Add(button);
+                }
+            }
+        }
+
+        void PlaceMines()
+        {
+            var random = new Random();
+            int placed = 0;
+            while (placed < MinesCount)
+            {
+                int row = random.Next(Rows);
+                int col = random.Next(Cols);
+                if (cells[row, col].IsMine)
+                    continue;
+                cells[row, col].IsMine = true;
+                placed++;
+            }
+        }
+
+        void CalculateNumbers()
+        {
+            for (int row = 0; row < Rows; row++)
+            {
+                for (int col = 0; col < Cols; col++)
+                {
+                    if (cells[row, col].IsMine)
+                        continue;
+                    int count = 0;
+                    ForEachNeighbor(row, col, (r, c) =>
+                    {
+                        if (cells[r, c].IsMine)
+                            count++;
+                    });
+                    cells[row, col].NeighborMines = count;
+                }
+            }
+        }
+
+        void ForEachNeighbor(int row, int col, Action<int, int> action)
+        {
+            for (int r = row - 1; r <= row + 1; r++)
+            {
+                for (int c = col - 1; c <= col + 1; c++)
+                {
+                    if (r < 0 || c < 0 || r >= Rows || c >= Cols)
+                        continue;
+                    if (r == row && c == col)
+                        continue;
+                    action(r, c);
                 }
             }
         }
