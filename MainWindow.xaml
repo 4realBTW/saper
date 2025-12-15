@@ -28,6 +28,12 @@
                        FontSize="24" FontWeight="Bold"
                        HorizontalAlignment="Center" Margin="0,0,0,10"
                        Foreground="#CE9178"/>
+            
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
+                <TextBlock Text="💣 Мины: " FontSize="16" Foreground="#D4D4D4" VerticalAlignment="Center"/>
+                <TextBlock x:Name="MinesCountText" Text="15" FontSize="20" FontWeight="Bold" 
+                           Foreground="#F44747" VerticalAlignment="Center"/>
+            </StackPanel>
         </StackPanel>
         
         <UniformGrid x:Name="BoardGrid" Grid.Row="1" 

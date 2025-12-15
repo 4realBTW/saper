@@ -14,6 +14,7 @@ namespace Minesweeper
         Cell[,] cells;
         bool gameOver;
         int openedSafeCells;
+        int flaggedCells;
 
         public MainWindow()
         {
@@ -27,9 +28,11 @@ namespace Minesweeper
             cells = new Cell[Rows, Cols];
             gameOver = false;
             openedSafeCells = 0;
+            flaggedCells = 0;
             StatusText.Text = "Игра идёт";
             StatusText.Foreground = new SolidColorBrush(Color.FromRgb(206, 145, 120));
-
+            MinesCountText.Text = MinesCount.ToString();
+            
             CreateCells();
             PlaceMines();
             CalculateNumbers();
@@ -47,6 +50,7 @@ namespace Minesweeper
                         Tag = new Position(row, col)
                     };
                     button.Click += CellButton_Click;
+                    button.MouseRightButtonUp += CellButton_RightClick;
 
                     var cell = new Cell
                     {
@@ -115,6 +119,33 @@ namespace Minesweeper
             }
 
             OpenSafeCell(pos.Row, pos.Col);
+        }
+
+        void CellButton_RightClick(object sender, MouseButtonEventArgs e)
+        {
+            if (gameOver)
+                return;
+            var button = (Button)sender;
+            var pos = (Position)button.Tag;
+            var cell = cells[pos.Row, pos.Col];
+            if (cell.IsOpened)
+                return;
+
+            if (cell.IsFlagged)
+            {
+                cell.IsFlagged = false;
+                cell.Button.Content = "";
+                flaggedCells--;
+            }
+            else
+            {
+                cell.IsFlagged = true;
+                cell.Button.Content = "🚩";
+                cell.Button.Foreground = new SolidColorBrush(Color.FromRgb(244, 71, 71));
+                flaggedCells++;
+            }
+
+            MinesCountText.Text = (MinesCount - flaggedCells).ToString();
         }
 
         void OpenSafeCell(int row, int col)
