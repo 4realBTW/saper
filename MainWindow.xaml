@@ -33,7 +33,18 @@
                 <TextBlock Text="💣 Мины: " FontSize="16" Foreground="#D4D4D4" VerticalAlignment="Center"/>
                 <TextBlock x:Name="MinesCountText" Text="15" FontSize="20" FontWeight="Bold" 
                            Foreground="#F44747" VerticalAlignment="Center"/>
+                
+                <TextBlock Text="   ⏱️ Время: " FontSize="16" Foreground="#D4D4D4" 
+                           VerticalAlignment="Center" Margin="20,0,0,0"/>
+                <TextBlock x:Name="TimerText" Text="0" FontSize="20" FontWeight="Bold" 
+                           Foreground="#4EC9B0" VerticalAlignment="Center"/>
             </StackPanel>
+            
+            <Button Content="🔄 Новая игра" Click="RestartButton_Click"
+                    Width="150" Height="35" FontSize="14" FontWeight="Bold"
+                    Background="#0E639C" Foreground="White"
+                    BorderBrush="#1177BB" BorderThickness="1"
+                    HorizontalAlignment="Center"/>
         </StackPanel>
         
         <UniformGrid x:Name="BoardGrid" Grid.Row="1" 

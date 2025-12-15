@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace Minesweeper
 {
@@ -15,11 +16,22 @@ namespace Minesweeper
         bool gameOver;
         int openedSafeCells;
         int flaggedCells;
+        DispatcherTimer timer;
+        int secondsElapsed;
 
         public MainWindow()
         {
             InitializeComponent();
+            timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromSeconds(1);
+            timer.Tick += Timer_Tick;
             StartGame();
+        }
+
+        void Timer_Tick(object sender, EventArgs e)
+        {
+            secondsElapsed++;
+            TimerText.Text = secondsElapsed.ToString();
         }
 
         void StartGame()
@@ -29,9 +41,13 @@ namespace Minesweeper
             gameOver = false;
             openedSafeCells = 0;
             flaggedCells = 0;
+            secondsElapsed = 0;
             StatusText.Text = "Игра идёт";
             StatusText.Foreground = new SolidColorBrush(Color.FromRgb(206, 145, 120));
             MinesCountText.Text = MinesCount.ToString();
+            TimerText.Text = "0";
+            timer.Stop();
+            timer.Start();
             
             CreateCells();
             PlaceMines();
@@ -119,6 +135,7 @@ namespace Minesweeper
             }
 
             OpenSafeCell(pos.Row, pos.Col);
+            CheckWinCondition();
         }
 
         void CellButton_RightClick(object sender, MouseButtonEventArgs e)
@@ -146,6 +163,7 @@ namespace Minesweeper
             }
 
             MinesCountText.Text = (MinesCount - flaggedCells).ToString();
+            CheckWinCondition();
         }
 
         void OpenSafeCell(int row, int col)
@@ -207,9 +225,40 @@ namespace Minesweeper
             }
         }
 
+        void CheckWinCondition()
+        {
+            bool allSafeCellsOpened = (openedSafeCells == Rows * Cols - MinesCount);
+            bool allMinesFlagged = (flaggedCells == MinesCount);
+            if (allMinesFlagged)
+            {
+                bool allFlagsCorrect = true;
+                for (int row = 0; row < Rows; row++)
+                {
+                    for (int col = 0; col < Cols; col++)
+                    {
+                        var cell = cells[row, col];
+                        if (cell.IsFlagged && !cell.IsMine)
+                        {
+                            allFlagsCorrect = false;
+                            break;
+                        }
+                    }
+                    if (!allFlagsCorrect)
+                        break;
+                }
+                if (allFlagsCorrect)
+                    EndGame(true);
+            }
+            else if (allSafeCellsOpened)
+            {
+                EndGame(true);
+            }
+        }
+
         void EndGame(bool win)
         {
             gameOver = true;
+            timer.Stop();
             if (win)
             {
                 StatusText.Text = "🎉 Победа! 😊";
@@ -261,6 +310,11 @@ namespace Minesweeper
                 case 8: return new SolidColorBrush(Color.FromRgb(212, 212, 212));
                 default: return new SolidColorBrush(Color.FromRgb(212, 212, 212));
             }
+        }
+
+        void RestartButton_Click(object sender, RoutedEventArgs e)
+        {
+            StartGame();
         }
 
         struct Position
