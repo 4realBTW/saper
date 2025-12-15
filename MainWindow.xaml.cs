@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace Minesweeper
@@ -11,6 +12,8 @@ namespace Minesweeper
         const int Cols = 10;
         const int MinesCount = 15;
         Cell[,] cells;
+        bool gameOver;
+        int openedSafeCells;
 
         public MainWindow()
         {
@@ -22,6 +25,8 @@ namespace Minesweeper
         {
             BoardGrid.Children.Clear();
             cells = new Cell[Rows, Cols];
+            gameOver = false;
+            openedSafeCells = 0;
             StatusText.Text = "Игра идёт";
             StatusText.Foreground = new SolidColorBrush(Color.FromRgb(206, 145, 120));
 
@@ -41,6 +46,7 @@ namespace Minesweeper
                         Style = (Style)FindResource("CellButtonStyle"),
                         Tag = new Position(row, col)
                     };
+                    button.Click += CellButton_Click;
 
                     var cell = new Cell
                     {
@@ -91,6 +97,110 @@ namespace Minesweeper
             }
         }
 
+        void CellButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (gameOver)
+                return;
+            var button = (Button)sender;
+            var pos = (Position)button.Tag;
+            var cell = cells[pos.Row, pos.Col];
+            if (cell.IsOpened || cell.IsFlagged)
+                return;
+
+            if (cell.IsMine)
+            {
+                OpenMine(cell);
+                EndGame(false);
+                return;
+            }
+
+            OpenSafeCell(pos.Row, pos.Col);
+        }
+
+        void OpenSafeCell(int row, int col)
+        {
+            var cell = cells[row, col];
+            if (cell.IsOpened || cell.IsFlagged)
+                return;
+            if (cell.IsMine)
+                return;
+
+            cell.IsOpened = true;
+            openedSafeCells++;
+            cell.Button.IsEnabled = false;
+            cell.Button.Background = new SolidColorBrush(Color.FromRgb(37, 37, 38));
+
+            if (cell.NeighborMines > 0)
+            {
+                cell.Button.Content = cell.NeighborMines.ToString();
+                cell.Button.Foreground = GetColorForNumber(cell.NeighborMines);
+            }
+            else
+            {
+                cell.Button.Content = "";
+                ForEachNeighbor(row, col, (r, c) =>
+                {
+                    if (!cells[r, c].IsOpened && !cells[r, c].IsMine)
+                        OpenSafeCell(r, c);
+                });
+            }
+        }
+
+        void OpenMine(Cell cell)
+        {
+            cell.Button.Content = "💣";
+            cell.Button.Background = new SolidColorBrush(Color.FromRgb(244, 71, 71));
+            cell.Button.Foreground = new SolidColorBrush(Color.FromRgb(30, 30, 30));
+        }
+
+        void RevealAllMines()
+        {
+            for (int row = 0; row < Rows; row++)
+            {
+                for (int col = 0; col < Cols; col++)
+                {
+                    var cell = cells[row, col];
+                    if (!cell.IsMine)
+                        continue;
+                    if (cell.IsFlagged)
+                    {
+                        cell.Button.Background = new SolidColorBrush(Color.FromRgb(78, 201, 176));
+                    }
+                    else
+                    {
+                        cell.Button.Content = "💣";
+                        cell.Button.Background = new SolidColorBrush(Color.FromRgb(62, 62, 66));
+                    }
+                    cell.Button.IsEnabled = false;
+                }
+            }
+        }
+
+        void EndGame(bool win)
+        {
+            gameOver = true;
+            if (win)
+            {
+                StatusText.Text = "🎉 Победа! 😊";
+                StatusText.Foreground = new SolidColorBrush(Color.FromRgb(78, 201, 176));
+                RevealAllMines();
+            }
+            else
+            {
+                StatusText.Text = "💥 Поражение";
+                StatusText.Foreground = new SolidColorBrush(Color.FromRgb(244, 71, 71));
+                RevealAllMines();
+            }
+
+            for (int row = 0; row < Rows; row++)
+            {
+                for (int col = 0; col < Cols; col++)
+                {
+                    cells[row, col].Button.IsEnabled = false;
+                }
+            }
+        }
+
         void ForEachNeighbor(int row, int col, Action<int, int> action)
         {
             for (int r = row - 1; r <= row + 1; r++)
@@ -103,6 +213,22 @@ namespace Minesweeper
                         continue;
                     action(r, c);
                 }
+            }
+        }
+
+        Brush GetColorForNumber(int n)
+        {
+            switch (n)
+            {
+                case 1: return new SolidColorBrush(Color.FromRgb(78, 201, 176));
+                case 2: return new SolidColorBrush(Color.FromRgb(156, 220, 254));
+                case 3: return new SolidColorBrush(Color.FromRgb(206, 145, 120));
+                case 4: return new SolidColorBrush(Color.FromRgb(197, 134, 192));
+                case 5: return new SolidColorBrush(Color.FromRgb(220, 220, 170));
+                case 6: return new SolidColorBrush(Color.FromRgb(86, 156, 214));
+                case 7: return new SolidColorBrush(Color.FromRgb(181, 206, 168));
+                case 8: return new SolidColorBrush(Color.FromRgb(212, 212, 212));
+                default: return new SolidColorBrush(Color.FromRgb(212, 212, 212));
             }
         }
 
